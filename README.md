@@ -23,8 +23,9 @@ scripts/
   01_export_lineage_input.R              Seurat  ->  cell-level CSV tables
   02_clonal_coupling_network.py          coupling scores, permutation null, FDR
   03_plot_clonal_coupling_components.py  publication figures, one per component
+data/                                    real input data for the published analysis
 examples/
-  demo_data/                             small demo dataset (committed)
+  demo_data/                             small synthetic dataset for the demo
   make_synthetic_input.py                regenerates demo_data from scratch
 docs/
   methods.md                             formal method description
@@ -226,16 +227,16 @@ python scripts/02_clonal_coupling_network.py \
 An edge enters the network only when $z>0$, shared clones $\ge 10$ and
 $q \le 0.05$.
 
-**Run time on real data.** For the published dataset (102,077 cells, 8,315
-clones, 45 clusters, 9 embryos) at 10,000 permutations, measured at 82 ms per
-permutation per core:
+**Run time on real data.** The published dataset in `data/` (102,077 cells,
+8,315 clones, 45 clusters, 9 embryos) at 10,000 permutations takes
+**about 6.5 minutes**, measured end to end on a 16-core Windows laptop.
 
-| Cores | Approximate wall time |
-| --- | --- |
-| 1 | 14 min |
-| 4 | 3.5 min |
-| 8 | 1.7 min |
-| 16 | 1 min |
+The permutation kernel costs 82 ms per permutation per core, so the theoretical
+floor on 16 cores is ~1 minute; the rest is worker startup and per-task data
+transfer, which is worse on Windows (spawn) than on Linux (fork). If the run
+feels slow, raise `--batch-size`: the default of 50 creates 200 tasks, whereas
+`--batch-size 500` creates 20 and amortises that overhead away. Single-core is
+roughly 14 minutes.
 
 Outputs: `pairwise_coupling_all.csv` (every pair, significant or not),
 `pairwise_coupling_significant_positive_edges.csv` (the network edges),
@@ -299,15 +300,26 @@ figure assembly.
 
 ## 5. Reproducing the published results
 
-The published dataset comprises **102,077 barcode-positive cells, 8,315
-embryo-specific clones, 45 transcriptomic clusters and 9 embryos**, giving 990
-unique cluster pairs.
+The real input data is included in `data/`, exactly as exported by step 1:
+
+| File | Contents |
+| --- | --- |
+| `data/lineage_cells.csv` | 102,077 barcode-positive cells — the analysis input |
+| `data/cluster_summary.csv` | 45 clusters with cell counts, clone counts and ordering |
+| `data/clone_summary.csv` | 8,315 embryo-specific clones, sizes and cluster occupancy |
+| `data/clone_cluster_counts.csv` | the clone-by-cluster count matrix, long form |
+| `data/embryo_summary.csv` | per-embryo totals for the 9 replicates |
+
+The dataset comprises **102,077 barcode-positive cells, 8,315 embryo-specific
+clones, 45 transcriptomic clusters and 9 embryos**, giving 990 unique cluster
+pairs. Only the first two files are needed to run the pipeline; the other three
+are supporting tables.
 
 ```bash
 # Step 2 - analysis
 python scripts/02_clonal_coupling_network.py \
-  --input input/lineage_cells.csv \
-  --cluster-summary input/cluster_summary.csv \
+  --input data/lineage_cells.csv \
+  --cluster-summary data/cluster_summary.csv \
   --outdir results_c14_refined \
   --permutations 10000 \
   --seed 1234
@@ -331,12 +343,17 @@ Verified properties of that run:
 | Quantity | Value |
 | --- | --- |
 | Permutations | 10,000 (empirical *p* floor 9.999e-5) |
-| Significant edges (*z*>0, *q*≤0.05) | 172 |
-| Of those, with ≥10 shared clones | 158 — the plotted network |
+| Significant edges (*z*>0, *q*≤0.05, ≥10 shared clones) | 158 — the plotted network |
 | Minimum *z* among plotted edges | 2.868 |
 | Maximum *q* among plotted edges | 0.0351 |
 | Non-finite *z*-scores | 0 |
 | Zero-variance nulls | 0 |
+
+**This reproduces exactly.** Re-running the command above on the committed
+`data/` returns a *z*-score matrix bit-identical to the published one (maximum
+absolute difference 0.0000 across all 45x45 entries) and the same 158 edges. The
+permutation is fully deterministic given `--seed`, and it held across a numpy
+version change (2.5.1 for the paper, 2.4.6 for the check).
 
 Two notes on exactness:
 
