@@ -1,0 +1,36 @@
+# Pipeline inputs and outputs -----------------------------------------------
+# Regenerate with the commands in the README rather than committing results.
+input/
+results/
+figures/
+example_input/
+example_output/
+example_figures/
+
+# Large or derived data
+*.rds
+*.h5ad
+*.h5seurat
+*.loom
+
+# Python ---------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+*.egg-info/
+
+# R --------------------------------------------------------------------------
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# OS / editor ----------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite both the accompanying paper and the
+  lineage-coupling framework it builds on (Bandler et al., and Wagner et al.).
+title: Undirected Clonal Coupling Network
+abstract: >-
+  Replicate-aware, abundance-corrected quantification of clonal coupling between
+  transcriptomic states, with a within-replicate permutation null, Benjamini-
+  Hochberg FDR control, and construction of a statistically filtered undirected
+  lineage network.
+type: software
+license: MIT
+
+# ---------------------------------------------------------------------------
+# TODO before release: replace the placeholders below with the real author
+# list, repository URL, version tag and DOI.
+# ---------------------------------------------------------------------------
+authors:
+  - family-names: He
+    given-names: TODO
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+repository-code: "TODO: https://github.com/<org>/<repo>"
+version: "TODO: 1.0.0"
+date-released: "TODO: YYYY-MM-DD"
+
+keywords:
+  - lineage tracing
+  - clonal barcoding
+  - single-cell RNA sequencing
+  - lineage coupling
+  - permutation test
+
+references:
+  - type: article
+    title: >-
+      Single-cell delineation of lineage and genetic identity in the mouse brain
+    authors:
+      - family-names: Bandler
+        given-names: Rachel C.
+    notes: >-
+      Source of the lineage-coupling framework and the permutation strategy.
+      Code at https://github.com/mayer-lab/Bandler-et-al_lineage

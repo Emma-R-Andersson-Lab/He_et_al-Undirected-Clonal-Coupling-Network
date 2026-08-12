@@ -1,0 +1,16 @@
+# Normalise line endings so the repository always stores LF, regardless of the
+# platform a contributor works on.
+* text=auto
+
+*.py  text eol=lf
+*.R   text eol=lf
+*.sh  text eol=lf
+*.md  text eol=lf
+*.yml text eol=lf
+*.cff text eol=lf
+*.csv text eol=lf
+
+*.png binary
+*.pdf binary
+*.rds binary
+*.h5ad binary

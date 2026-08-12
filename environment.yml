@@ -1,0 +1,16 @@
+name: clonal-coupling
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python>=3.10
+  - numpy>=1.24
+  - pandas>=2.0
+  - networkx>=3.0
+  - matplotlib-base>=3.7
+  - joblib>=1.3
+  # Optional, for the interactive HTML network only.
+  - plotly>=5.0
+  # Optional, used only to cross-check bh_fdr against a reference implementation.
+  - statsmodels>=0.14
