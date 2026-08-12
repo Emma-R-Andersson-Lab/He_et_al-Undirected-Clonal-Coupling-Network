@@ -24,7 +24,8 @@ scripts/
   02_clonal_coupling_network.py          coupling scores, permutation null, FDR
   03_plot_clonal_coupling_components.py  publication figures, one per component
 examples/
-  make_synthetic_input.py                positive-control dataset generator
+  demo_data/                             small demo dataset (committed)
+  make_synthetic_input.py                regenerates demo_data from scratch
 docs/
   methods.md                             formal method description
 ```
@@ -111,14 +112,17 @@ confirm the installation reproduces a correct answer. Clones are drawn from
 three overlapping "fate modules" (clusters 0-2, 3-5 and 6-8), while clusters
 9-11 receive clones independently of module.
 
+A ready-made copy of this dataset is committed at `examples/demo_data/` (3,590
+barcode-positive cells, 600 clones, 12 clusters, 4 embryos; 141 KB), so the demo
+runs without generating anything first. To regenerate it from scratch, run
+`python examples/make_synthetic_input.py --outdir examples/demo_data`.
+
 **Instructions**
 
 ```bash
-python examples/make_synthetic_input.py --outdir example_input
-
 python scripts/02_clonal_coupling_network.py \
-  --input example_input/lineage_cells.csv \
-  --cluster-summary example_input/cluster_summary.csv \
+  --input examples/demo_data/lineage_cells.csv \
+  --cluster-summary examples/demo_data/cluster_summary.csv \
   --outdir example_output \
   --permutations 2000
 
@@ -147,8 +151,8 @@ plus `connected_component_manifest.csv` and `isolated_nodes.csv`.
 Anything other than 9 edges / 3 isolates indicates an installation problem.
 
 **Expected run time on a normal desktop computer:** about **20 seconds** total
-(measured on 16 cores: 1.5 s to generate, 14 s for 2,000 permutations, 5 s to
-plot). On 4 cores expect roughly 50-60 seconds.
+(measured on 16 cores: 14 s for 2,000 permutations, 5 s to plot). On 4 cores
+expect roughly 50-60 seconds.
 
 ---
 

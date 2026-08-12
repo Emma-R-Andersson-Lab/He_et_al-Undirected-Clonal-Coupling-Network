@@ -34,3 +34,7 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+
+# The demo dataset IS committed (Nature checklist requires a demo dataset).
+!examples/demo_data/
+!examples/demo_data/*.csv
