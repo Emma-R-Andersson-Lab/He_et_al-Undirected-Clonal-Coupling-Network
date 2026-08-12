@@ -2,7 +2,7 @@
 
 Replicate-aware, abundance-corrected quantification of clonal coupling between
 transcriptomic states, and construction of the statistically filtered undirected
-lineage network reported in He *et al.*
+clonal coupling network reported in He *et al.*
 
 Lineage barcodes recovered from single cells tell you which transcriptomic
 states share a common progenitor. This pipeline turns that into a network: nodes
