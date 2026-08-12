@@ -10,13 +10,13 @@ are transcriptomic clusters, and an edge means two clusters are populated by the
 same clones more often than a within-replicate permutation null allows.
 
 The method builds on the lineage-coupling framework of
-[Bandler *et al.*, *Nature* 2021](https://github.com/mayer-lab/Bandler-et-al_lineage)
-(itself based on Wagner *et al.*), extended here to account explicitly for
-biological replicates and to emit an undirected, FDR-filtered network.
+[Bandler *et al.*](https://github.com/mayer-lab/Bandler-et-al_lineage) (itself
+based on Wagner *et al.*), extended here to account explicitly for biological
+replicates and to emit an undirected, FDR-filtered network.
 
----
-
-## Contents
+Full method: [docs/methods.md](docs/methods.md).
+Exact record of what differs from the original scripts: [CHANGES_FROM_ORIGINAL.md](CHANGES_FROM_ORIGINAL.md).
+Verified defects and gotchas: [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 ```
 scripts/
@@ -27,47 +27,91 @@ examples/
   make_synthetic_input.py                positive-control dataset generator
 docs/
   methods.md                             formal method description
-KNOWN_ISSUES.md                          documented defects and gotchas
 ```
 
 ---
 
-## Installation
+## 1. System requirements
 
-Python 3.10 or newer.
+**Operating systems.** Any OS supporting Python 3.10+ and R 4.x. No
+platform-specific code is used.
+
+- Developed and run for the paper on **Linux** (x86-64).
+- Independently tested on **Windows 11** (10.0.26200).
+
+**Software dependencies.** Exact versions used to produce the published results,
+and the versions the pipeline has additionally been tested against:
+
+| Package | Used for publication | Also tested with |
+| --- | --- | --- |
+| Python | 3.12.3 | 3.12.10 |
+| numpy | 2.5.1 | 2.4.6 |
+| pandas | 3.0.5 | 2.3.3 |
+| networkx | 3.6.1 | 3.6.1 |
+| matplotlib | 3.11.1 | 3.11.1 |
+| joblib | 1.5.3 | 1.5.3 |
+| plotly *(optional)* | 6.9.0 | 6.9.0 |
+| pillow | 12.3.0 | 12.3.0 |
+
+| R package | Used for publication | Also tested with |
+| --- | --- | --- |
+| R | 4.6 | 4.6.1 |
+| Seurat | 5.x | 5.5.1 |
+| dplyr | — | 1.2.1 |
+| tibble | — | 3.3.1 |
+| tidyr | — | 1.3.2 |
+| readr *(optional)* | — | falls back to base R |
+
+`plotly` is needed only for the interactive HTML network; everything else runs
+without it.
+
+**Hardware.** No non-standard hardware. A normal desktop or laptop is
+sufficient. The permutation step is embarrassingly parallel and scales close to
+linearly with core count, so more cores directly reduce runtime. Peak memory for
+the published dataset (102,077 cells, 8,315 clones, 45 clusters) stayed under
+roughly 2 GB.
+
+---
+
+## 2. Installation guide
 
 ```bash
+git clone <repository-url>
+cd "Undirected Clonal Coupling Network"
 python -m pip install -r requirements.txt
 ```
 
-or, with conda:
+or with conda:
 
 ```bash
 conda env create -f environment.yml
 conda activate clonal-coupling
 ```
 
-`plotly` is optional and only used for the interactive HTML output; the rest of
-the pipeline runs without it.
-
-The R step needs `Seurat`, `dplyr`, `tibble` and `tidyr`. `readr` is used for
-writing CSVs when present, and the script falls back to base R otherwise.
+For the R export step:
 
 ```r
 install.packages(c("Seurat", "dplyr", "tibble", "tidyr"))
 ```
 
-Verified with Python 3.12.10 (numpy 2.4.6, pandas 2.3.3, networkx 3.6.1,
-matplotlib 3.11.1, joblib 1.5.3) and R 4.6.1 (Seurat 5.5.1, dplyr 1.2.1,
-tibble 3.3.1, tidyr 1.3.2).
+**Typical install time on a normal desktop computer:** about 2-3 minutes for the
+Python dependencies over a normal broadband connection (all are pre-built
+wheels; no compilation). Installing Seurat from source takes considerably
+longer, typically 10-20 minutes, and is only needed for step 1.
+
+No build or compilation step is required for this repository itself; the scripts
+run directly.
 
 ---
 
-## Quick start
+## 3. Demo
 
-Confirm the installation on synthetic data with known structure. Clones are
-drawn from three overlapping "fate modules", so the correct answer is known in
-advance:
+The demo generates a synthetic dataset with **known** structure, so you can
+confirm the installation reproduces a correct answer. Clones are drawn from
+three overlapping "fate modules" (clusters 0-2, 3-5 and 6-8), while clusters
+9-11 receive clones independently of module.
+
+**Instructions**
 
 ```bash
 python examples/make_synthetic_input.py --outdir example_input
@@ -81,24 +125,41 @@ python scripts/02_clonal_coupling_network.py \
 python scripts/03_plot_clonal_coupling_components.py \
   --analysis-dir example_output \
   --outdir example_figures \
-  --layout-mode community \
+  --layout-mode spring \
   --node-labels-only
 ```
 
-This recovers exactly the nine within-module cluster pairs, leaves the three
-unplanted clusters isolated, and produces three 3-node components. Anything else
-means the installation is wrong.
+**Expected output**
+
+Step 2 prints:
+
+```
+Significant positive edges: 9
+Backbone edges:             6
+Isolated nodes:             3
+```
+
+The nine edges are exactly the within-module pairs `0-1, 0-2, 1-2, 3-4, 3-5,
+4-5, 6-7, 6-8, 7-8`, with **zero** false positives, and clusters 9, 10 and 11
+are left unconnected. Step 3 then writes three PNG/SVG pairs, one per module,
+plus `connected_component_manifest.csv` and `isolated_nodes.csv`.
+
+Anything other than 9 edges / 3 isolates indicates an installation problem.
+
+**Expected run time on a normal desktop computer:** about **20 seconds** total
+(measured on 16 cores: 1.5 s to generate, 14 s for 2,000 permutations, 5 s to
+plot). On 4 cores expect roughly 50-60 seconds.
 
 ---
 
-## The pipeline
+## 4. Instructions for use
 
 ### Step 1 — export from Seurat
 
-`scripts/01_export_lineage_input.R` reads a Seurat object carrying, per cell, a
-transcriptomic cluster label, a lineage barcode, and a replicate (embryo) ID.
+Reads a Seurat object carrying, per cell, a transcriptomic cluster label, a
+lineage barcode, and a replicate (embryo) ID.
 
-Interactively, with the object already in the session:
+Interactively, with the object already in your session:
 
 ```r
 source("scripts/01_export_lineage_input.R")
@@ -112,7 +173,7 @@ export_lineage_input(
 )
 ```
 
-Or from the command line against a saved object:
+Or headless against a saved object:
 
 ```bash
 Rscript scripts/01_export_lineage_input.R \
@@ -123,26 +184,20 @@ Rscript scripts/01_export_lineage_input.R \
   --outdir input
 ```
 
-Pass `--cluster-col IDENT` to use the object's active identities instead of a
-metadata column.
+Pass `--cluster-col IDENT` to use the object's active identities.
 
-**Outputs** (in `--outdir`):
-
-| File | Purpose |
+| Output | Purpose |
 | --- | --- |
 | `lineage_cells.csv` | One row per barcode-positive cell. The only file required downstream. |
-| `cluster_summary.csv` | Node annotation. Supplies `n_total_cells` (all clustered cells, barcoded or not), which sizes the network nodes, and `cluster_order`, which preserves your factor level ordering. |
+| `cluster_summary.csv` | Node annotation: `n_total_cells` over all clustered cells, and `cluster_order` preserving your factor level ordering. |
 | `clone_summary.csv` | Per-clone size and cluster occupancy. |
-| `clone_cluster_counts.csv` | The clone-by-cluster count matrix in long form. |
+| `clone_cluster_counts.csv` | Clone-by-cluster count matrix, long form. |
 | `embryo_summary.csv` | Per-replicate totals. |
 
-Two conventions are enforced here and re-validated in step 2:
-
-- The same barcode seen in two different embryos is **two independent clones**.
-  This is encoded as `clone_uid = "<embryo>::<clone_id>"`.
-- Node size comes from *all* clustered cells, while coupling statistics use only
-  barcode-positive cells. Keeping these separate stops sparsely-barcoded
-  clusters from being drawn as small.
+Two conventions are enforced here and re-validated in step 2: the same barcode
+in two different embryos is **two independent clones** (encoded as
+`clone_uid = "<embryo>::<clone_id>"`), and node size derives from *all* clustered
+cells while coupling statistics use only barcode-positive cells.
 
 ### Step 2 — coupling scores and permutation null
 
@@ -155,150 +210,166 @@ python scripts/02_clonal_coupling_network.py \
   --n-jobs -1
 ```
 
-For each embryo-specific clone *c* and cluster pair (*x*, *y*), the clone
-contributes only if it occupies both clusters, and its contribution is
-normalised by its own total size, so a 2-cell clone split across two states
-counts as much as a 100-cell clone split the same way:
-
-$$S_{xy}=\sum_c \mathbb{1}(C_{cx}>0 \land C_{cy}>0)\,\frac{C_{cx}+C_{cy}}{n_c}$$
-
-Cluster labels are then permuted **within each embryo**, holding fixed the clone
-assignments, the clone sizes, the per-replicate cluster abundances and the
-per-replicate number of barcoded cells. The observed score is standardised
-against that null ($z$), and a one-sided empirical enrichment $p$-value is
-computed and corrected across all unique cluster pairs with Benjamini-Hochberg.
-
-See [docs/methods.md](docs/methods.md) for the full derivation.
-
-**Key options**
-
 | Flag | Default | Meaning |
 | --- | --- | --- |
 | `--permutations` | 10000 | Within-embryo label permutations. |
 | `--min-shared-clones` | 10 | Minimum clones contributing to an edge. |
 | `--fdr` | 0.05 | Maximum BH-adjusted enrichment *q*-value. |
-| `--min-z` | 0 | Minimum coupling *z*-score. |
+| `--min-z` | 0 | Minimum coupling *z*-score. Do not set below 0 (see KNOWN_ISSUES #3). |
 | `--n-jobs` | -1 | Parallel workers; -1 uses all cores. |
-| `--seed` | 1234 | Makes the permutation run reproducible. |
+| `--seed` | 1234 | Makes the run reproducible. |
 
-An edge enters the network only when all three of $z>0$, shared clones $\ge 10$
-and $q \le 0.05$ hold.
+An edge enters the network only when $z>0$, shared clones $\ge 10$ and
+$q \le 0.05$.
 
-**Outputs** (in `--outdir`): `pairwise_coupling_all.csv` (every pair, whether
-significant or not), `pairwise_coupling_significant_positive_edges.csv` (the
-network edges), `clonal_coupling_nodes.csv`, the full score / null / *z* /
-shared-clone / FDR matrices, GraphML files for Cytoscape or Gephi, a *z*-score
-heatmap, and an interactive HTML network.
+**Run time on real data.** For the published dataset (102,077 cells, 8,315
+clones, 45 clusters, 9 embryos) at 10,000 permutations, measured at 82 ms per
+permutation per core:
+
+| Cores | Approximate wall time |
+| --- | --- |
+| 1 | 14 min |
+| 4 | 3.5 min |
+| 8 | 1.7 min |
+| 16 | 1 min |
+
+Outputs: `pairwise_coupling_all.csv` (every pair, significant or not),
+`pairwise_coupling_significant_positive_edges.csv` (the network edges),
+`clonal_coupling_nodes.csv`, the full score / null / *z* / shared-clone / FDR
+matrices, GraphML for Cytoscape or Gephi, a *z*-score heatmap, and an
+interactive HTML network.
+
+> **Sizing the permutation count.** The smallest attainable *p*-value is
+> 1/(*B*+1). After BH across *K*(*K*-1)/2 pairs this can stop a lone strong edge
+> from reaching *q* ≤ 0.05 at all. Use `--permutations` ≥ *K*(*K*-1)/2 ÷ 0.05.
+> See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) #2 — including why this did **not**
+> affect the published result.
 
 ### Step 3 — publication figures
 
-Step 2 already writes an overview figure. Step 3 redraws the network **one
-connected component per figure**, with curved edge routing, a shared global
-scale across components, and the colour scheme used in the paper.
+Redraws the network one connected component per figure. Never recomputes
+statistics; only ever restricts the edge set further.
 
 ```bash
 python scripts/03_plot_clonal_coupling_components.py \
   --analysis-dir results \
   --outdir figures \
-  --layout-mode community \
+  --layout-mode spring \
   --node-labels-only
 ```
 
-This step never recomputes statistics. It reads
-`pairwise_coupling_significant_positive_edges.csv` and `clonal_coupling_nodes.csv`
-and only ever *restricts* the edge set further.
-
-**Key options**
-
 | Flag | Default | Meaning |
 | --- | --- | --- |
-| `--layout-mode` | `community` | `community` detects coupling modules and separates them; `spring` uses one global force-directed layout. |
+| `--layout-mode` | `community` | `community` detects coupling modules and separates them into distinct blobs; `spring` is one global force-directed layout. |
 | `--edge-routing` | `curved` | Deterministic arcs with white haloes at crossings; `straight` for plain segments. |
-| `--node-labels-only` | off | Strip title, subtitle, footer, per-node counts and edge statistics, keeping only cluster names and the legends. Used for the paper figures. |
-| `--min-shared-clones` | 0 | Additional plotting-time filter. 0 keeps everything step 2 accepted. |
+| `--node-size-column` | `n_total_cells` | Node-table column driving node area. |
+| `--node-labels-only` | off | Strip title, subtitle, footer, per-node counts and edge statistics, keeping only cluster names and the legends. |
+| `--min-shared-clones` | 0 | Additional plotting-time filter. |
 | `--edge-width-factor` | 0.35 | Edge width = factor x *z*. |
+| `--colors-csv` | none | CSV with `cluster`,`color` to override node colours without editing the script. |
 | `--transparent` | off | Transparent PNG/SVG backgrounds. |
 
 Node colours come from the dictionaries at the top of the script
 (`C14_CLUSTER_COLORS` for `c14_`-prefixed labels, `INTEGRATED_CLUSTER_COLORS`
 otherwise). Unmapped clusters are drawn grey and listed in
-`unmatched_cluster_colors.csv`. Override per-cluster colours without editing the
-script using `--colors-csv`, a CSV with `cluster` and `color` columns.
+`unmatched_cluster_colors.csv`.
 
-**How to read the figure.** Node = transcriptomic cluster; node area = total
-cells in that cluster. Edge width is directly proportional to the coupling
-*z*-score, so an edge with *z* = 10 is exactly twice as thick as *z* = 5. Dark
-edges are the **maximum-spanning-forest backbone**: the strongest subset of
-edges needed to connect the network without loops. The backbone is a readability
-aid, not a measure of coupling strength and *not* a lineage trajectory, though
-it is suggestive of one. Grey edges are the remaining significant couplings.
+**How to read the figure.** Node = transcriptomic cluster; node area is
+proportional to `--node-size-column`. Edge width is directly proportional to the
+coupling *z*-score, so *z* = 10 is exactly twice as thick as *z* = 5. Dark edges
+are the **maximum-spanning-forest backbone**: the strongest subset of edges
+needed to connect each component without loops. The backbone is a readability
+aid, not a measure of coupling strength and *not* a lineage trajectory, though it
+is suggestive of one. Grey edges are the remaining significant couplings.
+
+> **Legend caveat.** The node-size legend is hard-coded to read `"<n> cells"`
+> regardless of which column `--node-size-column` points at. If you size nodes by
+> anything other than a cell count, the legend text is wrong and must be
+> corrected during figure assembly. This affects the published figure — see
+> KNOWN_ISSUES #7.
 
 SVGs are written with editable text (`svg.fonttype = "none"`) for downstream
 figure assembly.
 
 ---
 
-## Reproducing the published figures
+## 5. Reproducing the published results
 
-The paper's network figures were produced with:
+The published dataset comprises **102,077 barcode-positive cells, 8,315
+embryo-specific clones, 45 transcriptomic clusters and 9 embryos**, giving 990
+unique cluster pairs.
 
 ```bash
+# Step 2 - analysis
 python scripts/02_clonal_coupling_network.py \
   --input input/lineage_cells.csv \
   --cluster-summary input/cluster_summary.csv \
-  --outdir results \
+  --outdir results_c14_refined \
   --permutations 10000 \
   --seed 1234
 
+# Step 3 - the network figure in the paper
 python scripts/03_plot_clonal_coupling_components.py \
-  --analysis-dir results \
-  --outdir figures \
-  --layout-mode community \
-  --edge-routing curved \
+  --analysis-dir results_c14_refined \
+  --outdir plotting_results \
+  --layout-mode spring \
+  --node-size-column n_unique_clones \
+  --min-shared-clones 10 \
   --node-labels-only
 ```
 
-Two notes on exact reproduction:
+This yields 158 edges across 4 connected components plus 3 isolated clusters.
+The main panel is component 1: **30 nodes, 132 edges**, *z* ranging 2.87 to
+50.17, written as `component_01_nodes30_edges132.png/.svg`.
 
-1. **Clone threshold.** The published run used `--min-shared-clones 3` in step 2
-   and then re-filtered at 10 during plotting. This repository defaults to 10 in
-   step 2 instead, so that
-   `pairwise_coupling_significant_positive_edges.csv` matches the criterion
-   stated in the paper directly. The final edge set is identical either way;
-   only the intermediate CSV differs.
-2. **Layout.** `--layout-mode community` gives the modular layout. The
-   alternative panel in the same figure series used `--layout-mode spring`. Both
-   are seeded (`--layout-seed`, default 1234) and reproducible.
+Verified properties of that run:
+
+| Quantity | Value |
+| --- | --- |
+| Permutations | 10,000 (empirical *p* floor 9.999e-5) |
+| Significant edges (*z*>0, *q*≤0.05) | 172 |
+| Of those, with ≥10 shared clones | 158 — the plotted network |
+| Minimum *z* among plotted edges | 2.868 |
+| Maximum *q* among plotted edges | 0.0351 |
+| Non-finite *z*-scores | 0 |
+| Zero-variance nulls | 0 |
+
+Two notes on exactness:
+
+1. **Clone threshold.** The published step-2 run used the old default of 3 and
+   re-filtered at 10 during plotting. This repository defaults to **10** in step
+   2 so that `pairwise_coupling_significant_positive_edges.csv` matches the
+   criterion stated in the paper directly. The plotted edge set is identical
+   either way (confirmed: 158 edges in both routes); only that intermediate CSV
+   differs, dropping from 172 to 158 rows.
+2. **Layout reproducibility.** Layouts are seeded (`--layout-seed`, default
+   1234) and reproduce exactly on a fixed numpy version. Across numpy versions
+   the force-directed initialisation can differ marginally: re-rendering the
+   published figure under numpy 2.4.6 rather than 2.5.1 reproduced the identical
+   topology, node sizes and legends, with the cropped figure width differing by
+   2.2%. Node positions are also written to
+   `results/network_layout_coordinates.csv` if you need to pin them exactly.
 
 ---
 
 ## Interpretation and caveats
 
 - **The network is undirected.** An edge says two states share clonal origin. It
-  does not say which state came first, nor that one gives rise to the other.
-- **Coupling is relative to a within-replicate null.** $z > 0$ means more shared
+  does not say which came first, nor that one gives rise to the other.
+- **Coupling is relative to a within-replicate null.** *z* > 0 means more shared
   clonal history than expected once replicate identity and cluster abundance are
   held fixed. It is not an absolute measure.
 - **Absence of an edge is weak evidence.** Sparse barcoding, small clusters or
   too few permutations can all suppress a real edge. Check
   `pairwise_coupling_all.csv` before concluding two states are uncoupled.
-- **The permutation count bounds achievable significance.** With *B*
-  permutations the smallest possible *p*-value is 1/(*B*+1). After BH across
-  *K*(*K*-1)/2 pairs this can prevent an isolated strong edge from reaching
-  *q* <= 0.05 at all. See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for the sizing rule;
-  with many clusters, raise `--permutations`.
-
-Please read [KNOWN_ISSUES.md](KNOWN_ISSUES.md) before modifying the analysis
-script. It documents verified defects that are deliberately left in place so the
-published results remain byte-reproducible.
 
 ---
 
 ## Citation
 
-If you use this code, please cite the accompanying paper and the framework it
-builds on. See [CITATION.cff](CITATION.cff).
+Please cite the accompanying paper and the framework it builds on. See
+[CITATION.cff](CITATION.cff).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). MIT is approved by the Open Source Initiative.
