@@ -5,8 +5,9 @@ computes. It corresponds to the methods section of the accompanying paper.
 
 Clonal coupling between transcriptomic states was quantified by building on the
 lineage-coupling framework described by Bandler *et al.*, "Single-cell
-delineation of lineage and genetic identity in the mouse brain"
-([mayer-lab/Bandler-et-al_lineage](https://github.com/mayer-lab/Bandler-et-al_lineage)),
+delineation of lineage and genetic identity in the mouse brain", *Nature* **601**,
+404-409 (2022), [doi:10.1038/s41586-021-04237-0](https://doi.org/10.1038/s41586-021-04237-0)
+(code at [mayer-lab/Bandler-et-al_lineage](https://github.com/mayer-lab/Bandler-et-al_lineage)),
 itself based on the approach of Wagner and colleagues. In that framework the
 contribution of each clone to a pair of cell states is normalised by the total
 size of that clone, and the observed coupling is standardised against a
@@ -160,8 +161,16 @@ Criterion 2 is `--min-shared-clones`; criteria 1 and 3 are `--min-z` and
 
 ## 7. Network rendering
 
-Nodes are transcriptomic clusters, with area proportional to the total number of
-cells in the cluster (barcoded and unbarcoded alike).
+Nodes are transcriptomic clusters. Node area is proportional to a chosen
+per-cluster quantity, selected with `--node-size-column`. The published network
+figure sizes nodes by the **number of distinct embryo-specific clones observed in
+each cluster** (`n_unique_clones`); the default is instead the total number of
+cells in the cluster (`n_total_cells`, counting barcoded and unbarcoded cells
+alike).
+
+Note that the node-size legend is hard-coded to read "*n* cells" whatever column
+is selected, so for the published figure those legend numbers are clone counts,
+not cell counts. State the unit explicitly in any figure caption.
 
 Edge width is directly proportional to $Z_{xy}$, scaled by a constant factor of
 0.35. The factor exists purely because unscaled widths were hard to read; it

@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: >-
-  If you use this software, please cite both the accompanying paper and the
-  lineage-coupling framework it builds on (Bandler et al., and Wagner et al.).
+  If you use this software, please cite it as below, together with the
+  lineage-coupling framework it builds on (Bandler et al. 2022).
 title: Undirected Clonal Coupling Network
 abstract: >-
   Replicate-aware, abundance-corrected quantification of clonal coupling between
@@ -10,25 +10,23 @@ abstract: >-
   lineage network.
 type: software
 license: MIT
-
-# ---------------------------------------------------------------------------
-# TODO before release: replace the placeholders below with the real author
-# list, repository URL, version tag and DOI.
-# ---------------------------------------------------------------------------
 authors:
-  - family-names: He
-    given-names: TODO
-    # orcid: "https://orcid.org/0000-0000-0000-0000"
-repository-code: "TODO: https://github.com/<org>/<repo>"
-version: "TODO: 1.0.0"
-date-released: "TODO: YYYY-MM-DD"
-
+  - name: Emma R. Andersson Lab
+repository-code: >-
+  https://github.com/Emma-R-Andersson-Lab/He_et_al-Undirected-Clonal-Coupling-Network
+version: 1.0.0
+date-released: 2026-08-12
 keywords:
   - lineage tracing
   - clonal barcoding
   - single-cell RNA sequencing
   - lineage coupling
   - permutation test
+
+# The manuscript describing the application of this software is in preparation.
+# On publication, add it here as a `preferred-citation:` block and record the
+# archived release DOI (for example from Zenodo) as `doi:` above, so that
+# citations resolve to the paper rather than to the repository alone.
 
 references:
   - type: article
@@ -37,6 +35,40 @@ references:
     authors:
       - family-names: Bandler
         given-names: Rachel C.
+      - family-names: Vitali
+        given-names: Ilaria
+      - family-names: Delgado
+        given-names: Ryan N.
+      - family-names: Ho
+        given-names: May C.
+      - family-names: Dvoretskova
+        given-names: Elena
+      - family-names: Ibarra Molinas
+        given-names: Josue S.
+      - family-names: Frazel
+        given-names: Paul W.
+      - family-names: Mohammadkhani
+        given-names: Maesoumeh
+      - family-names: Machold
+        given-names: Robert
+      - family-names: Maedler
+        given-names: Sophia
+      - family-names: Liddelow
+        given-names: Shane A.
+      - family-names: Nowakowski
+        given-names: Tomasz J.
+      - family-names: Fishell
+        given-names: Gord
+      - family-names: Mayer
+        given-names: Christian
+    journal: Nature
+    volume: 601
+    start: 404
+    end: 409
+    year: 2022
+    doi: 10.1038/s41586-021-04237-0
+    url: "https://www.nature.com/articles/s41586-021-04237-0"
+    repository-code: "https://github.com/mayer-lab/Bandler-et-al_lineage"
     notes: >-
-      Source of the lineage-coupling framework and the permutation strategy.
-      Code at https://github.com/mayer-lab/Bandler-et-al_lineage
+      Source of the lineage-coupling framework and the within-replicate
+      permutation strategy adapted here.

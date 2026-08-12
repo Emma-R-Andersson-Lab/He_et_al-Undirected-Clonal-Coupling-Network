@@ -9,14 +9,14 @@ states share a common progenitor. This pipeline turns that into a network: nodes
 are transcriptomic clusters, and an edge means two clusters are populated by the
 same clones more often than a within-replicate permutation null allows.
 
-The method builds on the lineage-coupling framework of
-[Bandler *et al.*](https://github.com/mayer-lab/Bandler-et-al_lineage) (itself
-based on Wagner *et al.*), extended here to account explicitly for biological
+The method builds on the lineage-coupling framework of Bandler *et al.*
+([Nature 601, 404-409, 2022](https://doi.org/10.1038/s41586-021-04237-0);
+[code](https://github.com/mayer-lab/Bandler-et-al_lineage)), itself based on the
+approach of Wagner *et al.*, extended here to account explicitly for biological
 replicates and to emit an undirected, FDR-filtered network.
 
 Full method: [docs/methods.md](docs/methods.md).
-Exact record of what differs from the original scripts: [CHANGES_FROM_ORIGINAL.md](CHANGES_FROM_ORIGINAL.md).
-Verified defects and gotchas: [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+Verified defects and gotchas: [LIMITATIONS.md](LIMITATIONS.md).
 
 ```
 scripts/
@@ -77,8 +77,8 @@ roughly 2 GB.
 ## 2. Installation guide
 
 ```bash
-git clone <repository-url>
-cd "Undirected Clonal Coupling Network"
+git clone https://github.com/Emma-R-Andersson-Lab/He_et_al-Undirected-Clonal-Coupling-Network.git
+cd He_et_al-Undirected-Clonal-Coupling-Network
 python -m pip install -r requirements.txt
 ```
 
@@ -219,7 +219,7 @@ python scripts/02_clonal_coupling_network.py \
 | `--permutations` | 10000 | Within-embryo label permutations. |
 | `--min-shared-clones` | 10 | Minimum clones contributing to an edge. |
 | `--fdr` | 0.05 | Maximum BH-adjusted enrichment *q*-value. |
-| `--min-z` | 0 | Minimum coupling *z*-score. Do not set below 0 (see KNOWN_ISSUES #3). |
+| `--min-z` | 0 | Minimum coupling *z*-score. Do not set below 0 (see LIMITATIONS #3). |
 | `--n-jobs` | -1 | Parallel workers; -1 uses all cores. |
 | `--seed` | 1234 | Makes the run reproducible. |
 
@@ -246,7 +246,7 @@ interactive HTML network.
 > **Sizing the permutation count.** The smallest attainable *p*-value is
 > 1/(*B*+1). After BH across *K*(*K*-1)/2 pairs this can stop a lone strong edge
 > from reaching *q* ≤ 0.05 at all. Use `--permutations` ≥ *K*(*K*-1)/2 ÷ 0.05.
-> See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) #2 — including why this did **not**
+> See [LIMITATIONS.md](LIMITATIONS.md) #2 — including why this did **not**
 > affect the published result.
 
 ### Step 3 — publication figures
@@ -290,7 +290,7 @@ is suggestive of one. Grey edges are the remaining significant couplings.
 > regardless of which column `--node-size-column` points at. If you size nodes by
 > anything other than a cell count, the legend text is wrong and must be
 > corrected during figure assembly. This affects the published figure — see
-> KNOWN_ISSUES #7.
+> LIMITATIONS #7.
 
 SVGs are written with editable text (`svg.fonttype = "none"`) for downstream
 figure assembly.
@@ -371,8 +371,17 @@ Two notes on exactness:
 
 ## Citation
 
-Please cite the accompanying paper and the framework it builds on. See
+The manuscript describing this work is in preparation. Until it appears, please
+cite this repository directly — machine-readable metadata is in
 [CITATION.cff](CITATION.cff).
+
+Please also cite the framework this method builds on:
+
+> Bandler, R. C., Vitali, I., Delgado, R. N., Ho, M. C., Dvoretskova, E.,
+> Ibarra Molinas, J. S., Frazel, P. W., Mohammadkhani, M., Machold, R.,
+> Maedler, S., Liddelow, S. A., Nowakowski, T. J., Fishell, G. & Mayer, C.
+> Single-cell delineation of lineage and genetic identity in the mouse brain.
+> *Nature* **601**, 404-409 (2022). https://doi.org/10.1038/s41586-021-04237-0
 
 ## License
 
