@@ -23,13 +23,19 @@ scripts/
   01_export_lineage_input.R              Seurat  ->  cell-level CSV tables
   02_clonal_coupling_network.py          coupling scores, permutation null, FDR
   03_plot_clonal_coupling_components.py  publication figures, one per component
-data/                                    real input data for the published analysis
 examples/
   demo_data/                             small synthetic dataset for the demo
   make_synthetic_input.py                regenerates demo_data from scratch
 docs/
   methods.md                             formal method description
 ```
+
+**Data availability.** The real input data behind the published analysis
+(102,077 barcode-positive cells, 8,315 embryo-specific clones, 45 clusters, 9
+embryos) is not distributed in this repository. `[Add accession / repository
+link / contact statement here once available.]` The pipeline itself is fully
+exercised end to end using the synthetic dataset in `examples/demo_data/` (see
+Section 3).
 
 ---
 
@@ -227,9 +233,9 @@ python scripts/02_clonal_coupling_network.py \
 An edge enters the network only when $z>0$, shared clones $\ge 10$ and
 $q \le 0.05$.
 
-**Run time on real data.** The published dataset in `data/` (102,077 cells,
-8,315 clones, 45 clusters, 9 embryos) at 10,000 permutations takes
-**about 6.5 minutes**, measured end to end on a 16-core Windows laptop.
+**Run time on real data.** The published dataset (102,077 cells, 8,315 clones,
+45 clusters, 9 embryos) at 10,000 permutations takes **about 6.5 minutes**,
+measured end to end on a 16-core Windows laptop.
 
 The permutation kernel costs 82 ms per permutation per core, so the theoretical
 floor on 16 cores is ~1 minute; the rest is worker startup and per-task data
@@ -300,26 +306,25 @@ figure assembly.
 
 ## 5. Reproducing the published results
 
-The real input data is included in `data/`, exactly as exported by step 1:
+The real input data is **not included in this repository**
+(see Data availability, above). Once obtained, it takes the same two files
+required by any run of the pipeline:
 
 | File | Contents |
 | --- | --- |
-| `data/lineage_cells.csv` | 102,077 barcode-positive cells — the analysis input |
-| `data/cluster_summary.csv` | 45 clusters with cell counts, clone counts and ordering |
-| `data/clone_summary.csv` | 8,315 embryo-specific clones, sizes and cluster occupancy |
-| `data/clone_cluster_counts.csv` | the clone-by-cluster count matrix, long form |
-| `data/embryo_summary.csv` | per-embryo totals for the 9 replicates |
+| `lineage_cells.csv` | 102,077 barcode-positive cells — the analysis input |
+| `cluster_summary.csv` | 45 clusters with cell counts, clone counts and ordering |
 
-The dataset comprises **102,077 barcode-positive cells, 8,315 embryo-specific
-clones, 45 transcriptomic clusters and 9 embryos**, giving 990 unique cluster
-pairs. Only the first two files are needed to run the pipeline; the other three
-are supporting tables.
+The full published dataset comprises **102,077 barcode-positive cells, 8,315
+embryo-specific clones, 45 transcriptomic clusters and 9 embryos**, giving 990
+unique cluster pairs; `clone_summary.csv`, `clone_cluster_counts.csv` and
+`embryo_summary.csv` are supporting tables, not required to run the pipeline.
 
 ```bash
 # Step 2 - analysis
 python scripts/02_clonal_coupling_network.py \
-  --input data/lineage_cells.csv \
-  --cluster-summary data/cluster_summary.csv \
+  --input lineage_cells.csv \
+  --cluster-summary cluster_summary.csv \
   --outdir results_c14_refined \
   --permutations 10000 \
   --seed 1234
@@ -338,7 +343,8 @@ This yields 158 edges across 4 connected components plus 3 isolated clusters.
 The main panel is component 1: **30 nodes, 132 edges**, *z* ranging 2.87 to
 50.17, written as `component_01_nodes30_edges132.png/.svg`.
 
-Verified properties of that run:
+Verified properties of that run (reproduced internally against the real
+dataset prior to its removal from this repository):
 
 | Quantity | Value |
 | --- | --- |
@@ -349,9 +355,9 @@ Verified properties of that run:
 | Non-finite *z*-scores | 0 |
 | Zero-variance nulls | 0 |
 
-**This reproduces exactly.** Re-running the command above on the committed
-`data/` returns a *z*-score matrix bit-identical to the published one (maximum
-absolute difference 0.0000 across all 45x45 entries) and the same 158 edges. The
+**This reproduces exactly.** Re-running the command above on the real dataset
+returns a *z*-score matrix bit-identical to the published one (maximum absolute
+difference 0.0000 across all 45x45 entries) and the same 158 edges. The
 permutation is fully deterministic given `--seed`, and it held across a numpy
 version change (2.5.1 for the paper, 2.4.6 for the check).
 
